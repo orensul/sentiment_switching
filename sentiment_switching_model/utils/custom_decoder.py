@@ -1,5 +1,6 @@
 import collections
 import tensorflow as tf
+from tensorflow.contrib.seq2seq.python.ops import helper as helper_py
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
@@ -18,6 +19,8 @@ class BasicDecoderOutput(collections.namedtuple("BasicDecoderOutput", ("rnn_outp
 
 
 class CustomBasicDecoder(tf.contrib.seq2seq.BasicDecoder):
+    """Basic sampling decoder."""
+
     def __init__(self, cell, helper, initial_state, latent_vector, output_layer=None):
         """Initialize BasicDecoder.
         Args:

@@ -54,10 +54,17 @@ label_to_index_dict_file = "label_to_index_dict.json"
 index_to_label_dict_path = save_directory + "/" + index_to_label_dict_file
 label_to_index_dict_path = save_directory + "/" + label_to_index_dict_file
 
+average_label_embeddings_file = "average_label_embeddings.pkl"
+average_label_embeddings_path = save_directory + "/" + average_label_embeddings_file
+
 
 style_coordinates_file = "style_coordinates.pkl"
 content_coordinates_file = "content_coordinates.pkl"
 style_coordinates_path = save_directory + "/" + style_coordinates_file
 content_coordinates_path = save_directory + "/" + content_coordinates_file
+
+validation_scores_file = "validation_scores.txt"
+validation_scores_path = save_directory + "/" + validation_scores_file
+
 
 sentiment_words_file_path = "sentiment_switching_model/corpus_adapters/data/opinion-lexicon/sentiment-words.txt"
