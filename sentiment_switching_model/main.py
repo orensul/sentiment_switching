@@ -164,7 +164,8 @@ def main(argv):
                 options.validation_text_file_path, text_tokenizer, word_index, inverse_word_index)
         [_, validation_labels] = \
             data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
-        
+
+        pdb.set_trace()
         network.train(text_sequence_lengths, one_hot_labels, num_labels, data_size, 
                       validation_actual_word_lists, validation_sequences, validation_sequence_lengths, validation_labels)
         sess.close()
