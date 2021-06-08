@@ -1,3 +1,5 @@
+
+
 default_config = dict(
 	content_dim=128,
 	class_dim=8,

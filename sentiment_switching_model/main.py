@@ -166,7 +166,7 @@ def main(argv):
             data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
 
         pdb.set_trace()
-        network.train(text_sequence_lengths, one_hot_labels, num_labels, data_size, 
+        network.train(decoder_embedding_matrix, text_sequence_lengths, one_hot_labels, num_labels, data_size, 
                       validation_actual_word_lists, validation_sequences, validation_sequence_lengths, validation_labels)
         sess.close()
         logger.info("Training complete!")
