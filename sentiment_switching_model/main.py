@@ -16,6 +16,9 @@ from sentiment_switching_model.models import lord
 from sentiment_switching_model.utils import bleu_scorer, \
     data_processor, log_initializer, word_embedder, tf_session_helper
 
+
+from lord_config import default_config
+from models.network import Lord, Config
 logger = None
 
 
@@ -106,6 +109,7 @@ def main(argv):
 
     parser.parse_known_args(args=argv, namespace=options)
     if options.train_model:
+        parser.add_argument("--model-name", type=str, default="lord")
         parser.add_argument("--vocab-size", type=int, default=1000)
         parser.add_argument("--training-epochs", type=int, default=10)
         parser.add_argument("--text-file-path", type=str, required=True)
@@ -139,6 +143,7 @@ def main(argv):
 
     # Train and save model
     if options.train_model:
+        pdb.set_trace()
         os.makedirs(global_config.save_directory)
         with open(global_config.model_config_file_path, 'w') as model_config_file:
             json.dump(obj=mconf.__dict__, fp=model_config_file, indent=4)
@@ -153,46 +158,66 @@ def main(argv):
         encoder_embedding_matrix, decoder_embedding_matrix = \
             get_word_embeddings(options.training_embeddings_file_path, word_index)
 
-        # Build model
-        # logger.info("Building model architecture ...")
-        # network = lord.Lord()
-        # logger.info("Training model ...")
-        # sess = tf_session_helper.get_tensorflow_session()
-        #
-        # [_, validation_actual_word_lists, validation_sequences, validation_sequence_lengths] = \
-        #     data_processor.get_test_sequences(
-        #         options.validation_text_file_path, text_tokenizer, word_index, inverse_word_index)
-        # [_, validation_labels] = \
-        #     data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
-        #
-        # pdb.set_trace()
-        # network.train(decoder_embedding_matrix, text_sequence_lengths, one_hot_labels, num_labels, data_size,
-        #               validation_actual_word_lists, validation_sequences, validation_sequence_lengths, validation_labels)
-        # sess.close()
-        # logger.info("Training complete!")
+        if options.model_name == "lord":
+            logger.info("Building lord architecture ...")
+            config = Config(
+                sentence_shape=padded_sequences.shape[1:],
+                n_sentences=data_size,
+                n_classes=num_labels,
 
+                content_dim=default_config['content_dim'],
+                class_dim=default_config['class_dim'],
 
-        network = adversarial_autoencoder.AdversarialAutoencoder()
-        network.build_model(
-            word_index, encoder_embedding_matrix, decoder_embedding_matrix, num_labels)
+                content_std=default_config['content_std'],
+                content_decay=default_config['content_decay'],
+            )
 
-        logger.info("Training model ...")
-        sess = tf_session_helper.get_tensorflow_session()
+            logger.info("Building lord model ...")
+            lord = Lord.build(config)
+            logger.info("Training model ...")
+            
+            sess = tf_session_helper.get_tensorflow_session()
 
-        [_, validation_actual_word_lists, validation_sequences, validation_sequence_lengths] = \
-            data_processor.get_test_sequences(
-                options.validation_text_file_path, text_tokenizer, word_index, inverse_word_index)
-        [_, validation_labels] = \
-            data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
+            [_, validation_actual_word_lists, validation_sequences, validation_sequence_lengths] = \
+                data_processor.get_test_sequences(
+                    options.validation_text_file_path, text_tokenizer, word_index, inverse_word_index)
+            [_, validation_labels] = \
+                data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
 
-        network.train(
-            sess, data_size, padded_sequences, text_sequence_lengths, one_hot_labels, num_labels,
-            word_index, encoder_embedding_matrix, decoder_embedding_matrix, validation_sequences,
-            validation_sequence_lengths, validation_labels, inverse_word_index, validation_actual_word_lists,
-            options)
-        sess.close()
+            lord.train(
+                sentences=padded_sequences,
+                classes=one_hot_labels,
 
-        logger.info("Training complete!")
+                batch_size=default_config['train']['batch_size'],
+                n_epochs=default_config['train']['n_epochs'],
+            )
+            
+            # network.train(decoder_embedding_matrix, text_sequence_lengths, one_hot_labels, num_labels, data_size,
+            #               validation_actual_word_lists, validation_sequences, validation_sequence_lengths, validation_labels)
+            sess.close()
+            logger.info("Training complete!")
+        else:
+            network = adversarial_autoencoder.AdversarialAutoencoder()
+            network.build_model(
+                word_index, encoder_embedding_matrix, decoder_embedding_matrix, num_labels)
+
+            logger.info("Training model ...")
+            sess = tf_session_helper.get_tensorflow_session()
+
+            [_, validation_actual_word_lists, validation_sequences, validation_sequence_lengths] = \
+                data_processor.get_test_sequences(
+                    options.validation_text_file_path, text_tokenizer, word_index, inverse_word_index)
+            [_, validation_labels] = \
+                data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
+
+            network.train(
+                sess, data_size, padded_sequences, text_sequence_lengths, one_hot_labels, num_labels,
+                word_index, encoder_embedding_matrix, decoder_embedding_matrix, validation_sequences,
+                validation_sequence_lengths, validation_labels, inverse_word_index, validation_actual_word_lists,
+                options)
+            sess.close()
+
+            logger.info("Training complete!")
 
     elif options.transform_text:
         # Enforce a particular style embedding and regenerate text
