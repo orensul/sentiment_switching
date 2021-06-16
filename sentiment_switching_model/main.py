@@ -159,6 +159,7 @@ def main(argv):
             network = lord.Lord()
 
             logger.info("Building lord model ...")
+            pdb.set_trace()
             network.build_model(data_size, encoder_embedding_matrix, num_labels)
 
             logger.info("Training lord model ...")
