@@ -10,15 +10,13 @@ import pdb
 
 from sentiment_switching_model.config import global_config
 from sentiment_switching_model.config.model_config import mconf
+from sentiment_switching_model.config.lord_config import lconf
 from sentiment_switching_model.config.options import Options
 from sentiment_switching_model.models import adversarial_autoencoder
 from sentiment_switching_model.models import lord
 from sentiment_switching_model.utils import bleu_scorer, \
     data_processor, log_initializer, word_embedder, tf_session_helper
 
-
-from lord_config import default_config
-from models.network import Lord, Config
 logger = None
 
 
@@ -143,7 +141,6 @@ def main(argv):
 
     # Train and save model
     if options.train_model:
-        pdb.set_trace()
         os.makedirs(global_config.save_directory)
         with open(global_config.model_config_file_path, 'w') as model_config_file:
             json.dump(obj=mconf.__dict__, fp=model_config_file, indent=4)
@@ -159,23 +156,12 @@ def main(argv):
             get_word_embeddings(options.training_embeddings_file_path, word_index)
 
         if options.model_name == "lord":
-            logger.info("Building lord architecture ...")
-            config = Config(
-                sentence_shape=padded_sequences.shape[1:],
-                n_sentences=data_size,
-                n_classes=num_labels,
-
-                content_dim=default_config['content_dim'],
-                class_dim=default_config['class_dim'],
-
-                content_std=default_config['content_std'],
-                content_decay=default_config['content_decay'],
-            )
+            network = lord.Lord()
 
             logger.info("Building lord model ...")
-            lord = Lord.build(config)
-            logger.info("Training model ...")
-            
+            network.build_model(data_size, encoder_embedding_matrix, num_labels)
+
+            logger.info("Training lord model ...")
             sess = tf_session_helper.get_tensorflow_session()
 
             [_, validation_actual_word_lists, validation_sequences, validation_sequence_lengths] = \
@@ -184,18 +170,14 @@ def main(argv):
             [_, validation_labels] = \
                 data_processor.get_test_labels(options.validation_label_file_path, global_config.save_directory)
 
-            lord.train(
-                sentences=padded_sequences,
-                classes=one_hot_labels,
-
-                batch_size=default_config['train']['batch_size'],
-                n_epochs=default_config['train']['n_epochs'],
-            )
+            # network.train(
+            #     sess, data_size, padded_sequences, text_sequence_lengths, one_hot_labels, num_labels,
+            #     word_index, encoder_embedding_matrix, validation_sequences,
+            #     validation_sequence_lengths, validation_labels, inverse_word_index, validation_actual_word_lists,
+            #     options)
+            # sess.close()
+            # logger.info("Training complete!")
             
-            # network.train(decoder_embedding_matrix, text_sequence_lengths, one_hot_labels, num_labels, data_size,
-            #               validation_actual_word_lists, validation_sequences, validation_sequence_lengths, validation_labels)
-            sess.close()
-            logger.info("Training complete!")
         else:
             network = adversarial_autoencoder.AdversarialAutoencoder()
             network.build_model(

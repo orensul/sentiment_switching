@@ -4,7 +4,7 @@ import numpy as np
 import os
 import pickle
 import tensorflow as tf
-
+import pdb
 from sentiment_switching_model.config import global_config
 from sentiment_switching_model.config.model_config import mconf
 from sentiment_switching_model.evaluators import content_preservation, style_transfer
@@ -240,6 +240,7 @@ class AdversarialAutoencoder:
 
         with tf.device('/cpu:0'):
             with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
+                pdb.set_trace()
                 # word embeddings matrices
                 encoder_embeddings = tf.get_variable(
                     initializer=encoder_embedding_matrix, dtype=tf.float32,
