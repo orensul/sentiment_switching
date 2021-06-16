@@ -159,8 +159,7 @@ def main(argv):
             network = lord.Lord()
 
             logger.info("Building lord model ...")
-            pdb.set_trace()
-            network.build_model(data_size, encoder_embedding_matrix, num_labels)
+            network.build_model(word_index, data_size, encoder_embedding_matrix, decoder_embedding_matrix, num_labels)
 
             logger.info("Training lord model ...")
             sess = tf_session_helper.get_tensorflow_session()

@@ -1,7 +1,9 @@
 import os
+import pdb
 import pickle
 from collections import namedtuple
 
+import logging
 import numpy as np
 import tensorflow as tf
 
@@ -11,10 +13,14 @@ from sentiment_switching_model.config.lord_config import lconf
 
 from sentiment_switching_model.config.model_config import mconf
 
-
+from tensorflow.keras import optimizers, losses, regularizers
 from tensorflow.keras.layers import Input, Reshape, Embedding, GaussianNoise
 from tensorflow.keras.models import Model
 from tensorflow.keras.callbacks import EarlyStopping, Callback
+
+
+logger = logging.getLogger(global_config.logger_name)
+
 
 
 class Lord:
@@ -47,7 +53,7 @@ class Lord:
 
         return model
 
-    def build_model(self, data_size, encoder_embedding_matrix, num_labels):
+    def build_model(self, word_index, data_size, encoder_embedding_matrix, decoder_embedding_matrix, num_labels):
         # model inputs
         self.input_sequence = tf.placeholder(
             dtype=tf.int32, shape=[None, global_config.max_sequence_length],
@@ -136,14 +142,16 @@ class Lord:
                 logger.debug("decoder_embedded_sequence: {}".format(decoder_embedded_sequence))
 
 
-        self.content_embedding = self.build_regularized_embedding(data_size, lconf.content_embedding_size,
+        content_embedding = self.build_regularized_embedding(data_size, lconf.content_embedding_size,
                                                              lconf.content_std, lconf.content_decay, name='content')
 
-        self.style_embedding = self.build_embedding(num_labels, lconf.style_embedding_size, name='class')
+        style_embedding = self.build_embedding(num_labels, lconf.style_embedding_size, name='style')
+
+
 
         # concatenated generative embedding
         generative_embedding = tf.layers.dense(
-            inputs=tf.concat(values=[self.style_embedding, self.content_embedding], axis=1),
+            inputs=tf.concat(values=[style_embedding, content_embedding], axis=1),
             units=mconf.decoder_rnn_size, activation=tf.nn.leaky_relu,
             name="generative_embedding")
         logger.debug("generative_embedding: {}".format(generative_embedding))

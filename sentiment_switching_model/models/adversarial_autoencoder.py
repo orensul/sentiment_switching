@@ -266,7 +266,7 @@ class AdversarialAutoencoder:
                 logger.debug("decoder_embedded_sequence: {}".format(decoder_embedded_sequence))
 
         sentence_embedding = self.get_sentence_embedding(encoder_embedded_sequence)
-
+        pdb.set_trace()
         # style embedding
         style_embedding_mu, style_embedding_sigma = self.get_style_embedding(sentence_embedding)
         unweighted_style_kl_loss = self.get_kl_loss(style_embedding_mu, style_embedding_sigma)
