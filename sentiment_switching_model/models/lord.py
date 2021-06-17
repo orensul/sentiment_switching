@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-from keras.layers import Input
+from tensorflow.keras.layers import Input
 
 from sentiment_switching_model.config import global_config
 from sentiment_switching_model.config.lord_config import lconf
@@ -19,6 +19,7 @@ from tensorflow.keras.layers import Input, Reshape, Embedding, GaussianNoise
 from tensorflow.keras.models import Model
 from tensorflow.keras.callbacks import EarlyStopping, Callback
 
+from sentiment_switching_model.utils import data_processor, custom_decoder
 
 logger = logging.getLogger(global_config.logger_name)
 
@@ -149,13 +150,37 @@ class Lord:
         style_embedding = self.build_embedding(num_labels, lconf.style_embedding_size, name='style')
 
         pdb.set_trace()
+        # <tf.Tensor 'input_3:0' shape=(?, 1) dtype=float32>
         sentence_id = Input(shape=(1,))
+        # <tf.Tensor 'input_4:0' shape=(?, 1) dtype=float32>
         style_id = Input(shape=(1,))
-        
-        self.content_embedding = content_embedding(sentence_id)
-        self.style_embedding = style_embedding(style_id)
+
+
+
+        # style_embedding: Tensor("cond_3/Merge:0", shape=(?, 8), dtype=float32)
+        self.style_embedding = tf.cond(
+            pred=tf.math.logical_or(self.inference_mode, self.generation_mode),
+            true_fn=lambda: self.conditioning_embedding,
+            false_fn=lambda: style_embedding(style_id))
+        logger.debug("style_embedding: {}".format(self.style_embedding))
+
+        # <tf.Tensor 'cond_4/Merge:0' shape=(?, 128) dtype=float32>
+        pre_content_embedding = tf.cond(
+            pred=self.inference_mode,
+            true_fn=lambda: content_embedding_mu,
+            false_fn=lambda: content_embedding(sentence_id))
+
+        # content_embedding: Tensor("cond_5/Merge:0", shape=(?, 128), dtype=float32)
+        self.content_embedding = tf.cond(
+            pred=self.generation_mode,
+            true_fn=lambda: self.sampled_content_embedding,
+            false_fn=lambda: pre_content_embedding
+        )
+        logger.debug("content_embedding: {}".format(self.content_embedding))
+
 
         # concatenated generative embedding
+        # generative_embedding: Tensor("generative_embedding/LeakyRelu:0", shape=(?, 256), dtype=float32)
         generative_embedding = tf.layers.dense(
             inputs=tf.concat(values=[self.style_embedding, self.content_embedding], axis=1),
             units=mconf.decoder_rnn_size, activation=tf.nn.leaky_relu,

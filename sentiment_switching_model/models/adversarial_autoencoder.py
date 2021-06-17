@@ -171,7 +171,6 @@ class AdversarialAutoencoder:
         return tf.reduce_mean(input_tensor=tf.reduce_sum(input_tensor=-x * tf.log(x + mconf.epsilon), axis=1))
 
     def build_model(self, word_index, encoder_embedding_matrix, decoder_embedding_matrix, num_labels):
-        pdb.set_trace()
         # model inputs
         self.input_sequence = tf.placeholder(
             dtype=tf.int32, shape=[None, global_config.max_sequence_length],
