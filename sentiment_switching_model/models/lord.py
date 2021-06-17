@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 
+from keras.layers import Input
 
 from sentiment_switching_model.config import global_config
 from sentiment_switching_model.config.lord_config import lconf
@@ -147,11 +148,15 @@ class Lord:
 
         style_embedding = self.build_embedding(num_labels, lconf.style_embedding_size, name='style')
 
-
+        sentence_id = Input(shape=(1,))
+        style_id = Input(shape=(1,))
+        
+        self.content_embedding = content_embedding(sentence_id)
+        self.style_embedding = style_embedding(style_id)
 
         # concatenated generative embedding
         generative_embedding = tf.layers.dense(
-            inputs=tf.concat(values=[style_embedding, content_embedding], axis=1),
+            inputs=tf.concat(values=[self.style_embedding, self.content_embedding], axis=1),
             units=mconf.decoder_rnn_size, activation=tf.nn.leaky_relu,
             name="generative_embedding")
         logger.debug("generative_embedding: {}".format(generative_embedding))
