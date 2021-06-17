@@ -148,6 +148,7 @@ class Lord:
 
         style_embedding = self.build_embedding(num_labels, lconf.style_embedding_size, name='style')
 
+        pdb.set_trace()
         sentence_id = Input(shape=(1,))
         style_id = Input(shape=(1,))
         
