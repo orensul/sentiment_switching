@@ -55,6 +55,37 @@ class Lord:
 
         return model
 
+    def run_batch(self, sess, start_index, end_index, fetches, padded_sequences,
+                  one_hot_labels, text_sequence_lengths,
+                  conditioning_embedding, inference_mode, generation_mode, current_epoch):
+
+        if not inference_mode and not generation_mode:
+            conditioning_embedding = np.random.uniform(
+                size=(end_index - start_index, mconf.style_embedding_size),
+                low=-0.05, high=0.05).astype(dtype=np.float32)
+
+        sampled_content_embedding = np.random.normal(
+            size=(end_index - start_index, mconf.content_embedding_size)).astype(dtype=np.float32)
+
+        bow_representations = data_processor.get_bow_representations(
+            padded_sequences[start_index: end_index])
+
+        ops = sess.run(
+            fetches=fetches,
+            feed_dict={
+                self.input_sequence: padded_sequences[start_index: end_index],
+                self.input_label: one_hot_labels[start_index: end_index],
+                self.sequence_lengths: text_sequence_lengths[start_index: end_index],
+                self.input_bow_representations: bow_representations,
+                self.inference_mode: inference_mode,
+                self.generation_mode: generation_mode,
+                self.conditioning_embedding: conditioning_embedding,
+                self.sampled_content_embedding: sampled_content_embedding,
+                self.epoch: current_epoch
+            })
+
+        return ops
+
     def build_model(self, word_index, data_size, encoder_embedding_matrix, decoder_embedding_matrix, num_labels):
         # model inputs
         self.input_sequence = tf.placeholder(
@@ -143,39 +174,43 @@ class Lord:
                     name="decoder_embedded_sequence")
                 logger.debug("decoder_embedded_sequence: {}".format(decoder_embedded_sequence))
 
-
         content_embedding = self.build_regularized_embedding(data_size, lconf.content_embedding_size,
                                                              lconf.content_std, lconf.content_decay, name='content')
 
         style_embedding = self.build_embedding(num_labels, lconf.style_embedding_size, name='style')
 
-        pdb.set_trace()
         # <tf.Tensor 'input_3:0' shape=(?, 1) dtype=float32>
         sentence_id = Input(shape=(1,))
         # <tf.Tensor 'input_4:0' shape=(?, 1) dtype=float32>
         style_id = Input(shape=(1,))
 
+        style_embedding = style_embedding(style_id)
+        content_embedding = content_embedding(sentence_id)
 
+        pdb.set_trace()
 
         # style_embedding: Tensor("cond_3/Merge:0", shape=(?, 8), dtype=float32)
         self.style_embedding = tf.cond(
             pred=tf.math.logical_or(self.inference_mode, self.generation_mode),
             true_fn=lambda: self.conditioning_embedding,
-            false_fn=lambda: style_embedding(style_id))
+            false_fn=lambda: style_embedding)
         logger.debug("style_embedding: {}".format(self.style_embedding))
 
-        # <tf.Tensor 'cond_4/Merge:0' shape=(?, 128) dtype=float32>
+
+
         pre_content_embedding = tf.cond(
             pred=self.inference_mode,
-            true_fn=lambda: content_embedding_mu,
-            false_fn=lambda: content_embedding(sentence_id))
+            true_fn=lambda: content_embedding,
+            false_fn=lambda: content_embedding)
 
-        # content_embedding: Tensor("cond_5/Merge:0", shape=(?, 128), dtype=float32)
+
+
         self.content_embedding = tf.cond(
             pred=self.generation_mode,
             true_fn=lambda: self.sampled_content_embedding,
             false_fn=lambda: pre_content_embedding
         )
+
         logger.debug("content_embedding: {}".format(self.content_embedding))
 
 
@@ -187,6 +222,8 @@ class Lord:
             name="generative_embedding")
         logger.debug("generative_embedding: {}".format(generative_embedding))
 
+        # decoder_embedded_sequence: <tf.Tensor 'embeddings/decoder_embedded_sequence/mul_1:0' shape=(?, 16, 300) dtype=float32>
+        # decoder_embeddings: <tf.Variable 'embeddings/decoder_embeddings:0' shape=(1000, 300) dtype=float32_ref>
         # sequence predictions
         with tf.name_scope('sequence_prediction'):
             training_output, self.inference_output, self.final_sequence_lengths = \
@@ -222,6 +259,8 @@ class Lord:
                 latent_vector=generative_embedding,
                 output_layer=projection_layer)
             training_decoder.initialize(training_decoder_scope_name)
+
+            pdb.set_trace()
 
             training_decoder_output, _, _ = tf.contrib.seq2seq.dynamic_decode(
                 decoder=training_decoder, impute_finished=True,

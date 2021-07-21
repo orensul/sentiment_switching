@@ -122,6 +122,7 @@ class AdversarialAutoencoder:
                 inputs=embedded_sequence,
                 sequence_length=self.sequence_lengths)
 
+            pdb.set_trace()
             training_decoder = custom_decoder.CustomBasicDecoder(
                 cell=decoder_cell, helper=training_helper,
                 initial_state=init_state,
@@ -242,7 +243,6 @@ class AdversarialAutoencoder:
 
         with tf.device('/cpu:0'):
             with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
-                pdb.set_trace()
                 # word embeddings matrices
                 # encoder_embeddings: <tf.Variable 'embeddings/encoder_embeddings:0' shape=(1000, 300) dtype=float32_ref>
                 encoder_embeddings = tf.get_variable(
@@ -273,7 +273,6 @@ class AdversarialAutoencoder:
 
         # <tf.Tensor 'sentence_embedding/sentence_embedding_1:0' shape=(?, 512) dtype=float32> after RNN+GRU Encoder
         sentence_embedding = self.get_sentence_embedding(encoder_embedded_sequence)
-        pdb.set_trace()
         # style embedding
         # style_embedding_mu <tf.Tensor 'style_embedding/dropout/mul_1:0' shape=(?, 8) dtype=float32>
         # style_embedding_sigma <tf.Tensor 'style_embedding/dropout/mul_1:0' shape=(?, 8) dtype=float32>
@@ -315,6 +314,8 @@ class AdversarialAutoencoder:
         logger.debug("content_embedding: {}".format(self.content_embedding))
 
         # concatenated generative embedding
+        # self.style_embedding: <tf.Tensor 'cond_3/Merge:0' shape=(?, 8) dtype=float32>
+        # self.content_embedding: <tf.Tensor 'cond_5/Merge:0' shape=(?, 128) dtype=float32>
         # generative_embedding: Tensor("generative_embedding/LeakyRelu:0", shape=(?, 256), dtype=float32)
         generative_embedding = tf.layers.dense(
             inputs=tf.concat(values=[self.style_embedding, self.content_embedding], axis=1),
