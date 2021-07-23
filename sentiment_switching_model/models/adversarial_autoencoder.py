@@ -123,6 +123,11 @@ class AdversarialAutoencoder:
                 sequence_length=self.sequence_lengths)
 
             pdb.set_trace()
+            # generative_embedding: <tf.Tensor 'generative_embedding/LeakyRelu:0' shape=(?, 256) dtype=float32>
+            # projection_layer: <tensorflow.python.layers.core.Dense object at 0x7f5d77e0b950>
+            # init_state: <tf.Tensor 'sequence_prediction/DropoutWrapperZeroState/GRUCellZeroState/zeros:0' shape=(?, 256) dtype=float32>
+            # decoder_cell: <tensorflow.python.ops.rnn_cell_impl.DropoutWrapper object at 0x7f5d77e0b910>
+            # training_helper: <tensorflow.contrib.seq2seq.python.ops.helper.TrainingHelper object at 0x7f5d77e106d0>
             training_decoder = custom_decoder.CustomBasicDecoder(
                 cell=decoder_cell, helper=training_helper,
                 initial_state=init_state,
@@ -130,11 +135,14 @@ class AdversarialAutoencoder:
                 output_layer=projection_layer)
             training_decoder.initialize(training_decoder_scope_name)
 
+            # training_decoder: <sentiment_switching_model.utils.custom_decoder.CustomBasicDecoder object at 0x7f5d77cf7650>
+
             training_decoder_output, _, _ = tf.contrib.seq2seq.dynamic_decode(
                 decoder=training_decoder, impute_finished=True,
                 maximum_iterations=global_config.max_sequence_length,
                 scope=training_decoder_scope_name)
 
+        # training_decoder_output: BasicDecoderOutput(rnn_output=<tf.Tensor 'sequence_prediction/training_decoder/training_decoder/transpose:0' shape=(?, ?, 1000) dtype=float32>, sample_id=<tf.Tensor 'sequence_prediction/training_decoder/training_decoder/transpose_1:0' shape=(?, ?) dtype=int32>)
         inference_decoder_scope_name = "inference_decoder"
         with tf.name_scope(inference_decoder_scope_name):
             greedy_embedding_helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
@@ -474,6 +482,7 @@ class AdversarialAutoencoder:
         bow_representations = data_processor.get_bow_representations(
             padded_sequences[start_index: end_index])
 
+        pdb.set_trace()
         ops = sess.run(
             fetches=fetches,
             feed_dict={

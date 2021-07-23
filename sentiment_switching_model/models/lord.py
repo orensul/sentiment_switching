@@ -130,10 +130,10 @@ class Lord:
             true_fn=lambda: 1.0,
             false_fn=lambda: mconf.sequence_word_keep_prob)
 
-        self.conditioning_embedding = tf.placeholder(
-            dtype=tf.float32, shape=[None, mconf.style_embedding_size],
-            name="conditioning_embedding")
-        logger.debug("conditioning_embedding: {}".format(self.conditioning_embedding))
+        # self.conditioning_embedding = tf.placeholder(
+        #     dtype=tf.float32, shape=[None, mconf.style_embedding_size],
+        #     name="conditioning_embedding")
+        # logger.debug("conditioning_embedding: {}".format(self.conditioning_embedding))
 
         self.sampled_content_embedding = tf.placeholder(
             dtype=tf.float32, shape=[None, mconf.content_embedding_size],
@@ -188,29 +188,9 @@ class Lord:
         content_embedding = content_embedding(sentence_id)
 
         pdb.set_trace()
-
         # style_embedding: Tensor("cond_3/Merge:0", shape=(?, 8), dtype=float32)
-        self.style_embedding = tf.cond(
-            pred=tf.math.logical_or(self.inference_mode, self.generation_mode),
-            true_fn=lambda: self.conditioning_embedding,
-            false_fn=lambda: style_embedding)
-        logger.debug("style_embedding: {}".format(self.style_embedding))
-
-
-
-        pre_content_embedding = tf.cond(
-            pred=self.inference_mode,
-            true_fn=lambda: content_embedding,
-            false_fn=lambda: content_embedding)
-
-
-
-        self.content_embedding = tf.cond(
-            pred=self.generation_mode,
-            true_fn=lambda: self.sampled_content_embedding,
-            false_fn=lambda: pre_content_embedding
-        )
-
+        self.style_embedding = style_embedding
+        self.content_embedding = content_embedding
         logger.debug("content_embedding: {}".format(self.content_embedding))
 
 
