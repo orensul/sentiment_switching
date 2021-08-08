@@ -122,7 +122,6 @@ class AdversarialAutoencoder:
                 inputs=embedded_sequence,
                 sequence_length=self.sequence_lengths)
 
-            pdb.set_trace()
             # generative_embedding: <tf.Tensor 'generative_embedding/LeakyRelu:0' shape=(?, 256) dtype=float32>
             # projection_layer: <tensorflow.python.layers.core.Dense object at 0x7f5d77e0b950>
             # init_state: <tf.Tensor 'sequence_prediction/DropoutWrapperZeroState/GRUCellZeroState/zeros:0' shape=(?, 256) dtype=float32>
@@ -134,6 +133,9 @@ class AdversarialAutoencoder:
                 latent_vector=generative_embedding,
                 output_layer=projection_layer)
             training_decoder.initialize(training_decoder_scope_name)
+
+
+            pdb.set_trace()
 
             # training_decoder: <sentiment_switching_model.utils.custom_decoder.CustomBasicDecoder object at 0x7f5d77cf7650>
 

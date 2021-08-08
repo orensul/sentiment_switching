@@ -180,8 +180,7 @@ def main(argv):
             
         else:
             network = adversarial_autoencoder.AdversarialAutoencoder()
-            network.build_model(
-                word_index, encoder_embedding_matrix, decoder_embedding_matrix, num_labels)
+            network.build_model(word_index, encoder_embedding_matrix, decoder_embedding_matrix, num_labels)
 
             logger.info("Training model ...")
             sess = tf_session_helper.get_tensorflow_session()
