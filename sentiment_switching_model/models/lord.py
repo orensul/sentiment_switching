@@ -150,33 +150,33 @@ class Lord:
         with tf.device('/cpu:0'):
             with tf.variable_scope("embeddings", reuse=tf.AUTO_REUSE):
                 # word embeddings matrices
+                # encoder_embeddings: <tf.Variable 'embeddings/encoder_embeddings:0' shape=(1000, 300) dtype=float32_ref>
                 encoder_embeddings = tf.get_variable(
                     initializer=encoder_embedding_matrix, dtype=tf.float32,
                     trainable=True, name="encoder_embeddings")
                 logger.debug("encoder_embeddings: {}".format(encoder_embeddings))
 
+                # decoder_embeddings: <tf.Variable 'embeddings/decoder_embeddings:0' shape=(1000, 300) dtype=float32_ref>
                 decoder_embeddings = tf.get_variable(
                     initializer=decoder_embedding_matrix, dtype=tf.float32,
                     trainable=True, name="decoder_embeddings")
                 logger.debug("decoder_embeddings: {}".format(decoder_embeddings))
 
-
                 # embedded sequences
+                # encoder_embedded_sequence: Tensor("embeddings/encoder_embedded_sequence/mul_1:0", shape=(?, 15, 300), dtype=float32, device=/device:CPU:0)
                 encoder_embedded_sequence = tf.nn.dropout(
                     x=tf.nn.embedding_lookup(params=encoder_embeddings, ids=self.input_sequence),
                     keep_prob=self.sequence_word_keep_prob,
                     name="encoder_embedded_sequence")
                 logger.debug("encoder_embedded_sequence: {}".format(encoder_embedded_sequence))
 
+                # decoder_embedded_sequence: Tensor("embeddings/decoder_embedded_sequence/mul_1:0", shape=(?, 16, 300), dtype=float32, device=/device:CPU:0)
                 decoder_embedded_sequence = tf.nn.dropout(
                     x=tf.nn.embedding_lookup(params=decoder_embeddings, ids=decoder_input),
                     keep_prob=self.sequence_word_keep_prob,
                     name="decoder_embedded_sequence")
                 logger.debug("decoder_embedded_sequence: {}".format(decoder_embedded_sequence))
 
-
-        pdb.set_trace()
-        
         content_embedding = self.build_regularized_embedding(data_size, lconf.content_embedding_size,
                                                              lconf.content_std, lconf.content_decay, name='content')
 
@@ -207,6 +207,8 @@ class Lord:
         # decoder_embedded_sequence: <tf.Tensor 'embeddings/decoder_embedded_sequence/mul_1:0' shape=(?, 16, 300) dtype=float32>
         # decoder_embeddings: <tf.Variable 'embeddings/decoder_embeddings:0' shape=(1000, 300) dtype=float32_ref>
         # sequence predictions
+        
+        pdb.set_trace()
         with tf.name_scope('sequence_prediction'):
             training_output, self.inference_output, self.final_sequence_lengths = \
                 self.generate_output_sequence(
@@ -235,6 +237,8 @@ class Lord:
                 inputs=embedded_sequence,
                 sequence_length=self.sequence_lengths)
 
+
+
             training_decoder = custom_decoder.CustomBasicDecoder(
                 cell=decoder_cell, helper=training_helper,
                 initial_state=init_state,
@@ -242,11 +246,12 @@ class Lord:
                 output_layer=projection_layer)
             training_decoder.initialize(training_decoder_scope_name)
 
+
             pdb.set_trace()
 
             training_decoder_output, _, _ = tf.contrib.seq2seq.dynamic_decode(
                 decoder=training_decoder, impute_finished=True,
-                maximum_iterations=global_config.max_sequence_length,
+                maximum_iterations=1,
                 scope=training_decoder_scope_name)
 
         inference_decoder_scope_name = "inference_decoder"
